@@ -99,9 +99,9 @@ def scoreBoard(game_state):
     """
     if game_state.checkmate:
         if game_state.white_to_move:
-            return -CHECKMATE  # black wins
+            return -CHECKMATE
         else:
-            return CHECKMATE  # white wins
+            return CHECKMATE 
     elif game_state.stalemate:
         return STALEMATE
     score = 0
