@@ -6,7 +6,6 @@ import random
 from multiprocessing import Process, Queue
 import random
 
-# Game constants
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH = 250
 MOVE_LOG_PANEL_HEIGHT = BOARD_HEIGHT
@@ -15,7 +14,6 @@ SQUARE_SIZE = BOARD_HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
-# Color scheme
 MENU_BG = (42, 42, 42)
 BOARD_COLORS = [(240, 217, 181), (181, 136, 99)]
 HIGHLIGHT_COLOR = (42, 157, 143, 100)
@@ -27,12 +25,11 @@ BUTTON_COLORS = {
 }
 
 def load_images():
-    """Load images for chess pieces"""
     pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load(f"images/{piece}.png"), (SQUARE_SIZE, SQUARE_SIZE))
 
-class Button:#Modern button component with hover and click effects
+class Button:
     def __init__(self, x, y, w, h, text, radius=10):
         self.rect = p.Rect(x, y, w, h)
         self.text = text
@@ -40,7 +37,7 @@ class Button:#Modern button component with hover and click effects
         self.state = 'normal'
         self.clicked = False
 
-    def draw(self, surface, font):#Draw button with current state
+    def draw(self, surface, font):
         color = BUTTON_COLORS[self.state]
         p.draw.rect(surface, color, self.rect, border_radius=self.radius)
         p.draw.rect(surface, (255, 255, 255), self.rect, 2, self.radius)
@@ -48,7 +45,7 @@ class Button:#Modern button component with hover and click effects
         text_rect = text_surf.get_rect(center=self.rect.center)
         surface.blit(text_surf, text_rect)
 
-    def handle_event(self, event):#pdate button state based on events
+    def handle_event(self, event):
         if event.type == p.MOUSEMOTION:
             self.state = 'hover' if self.rect.collidepoint(event.pos) else 'normal'
         elif event.type == p.MOUSEBUTTONDOWN:
@@ -64,47 +61,43 @@ class Button:#Modern button component with hover and click effects
             self.state = 'normal'
         return False
 
-def draw_board(screen):# Draw the chess board squares
+def draw_board(screen):
     for row in range(DIMENSION):
         for col in range(DIMENSION):
             color = BOARD_COLORS[(row + col) % 2]
             p.draw.rect(screen, color, p.Rect(col*SQUARE_SIZE, row*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
-def draw_pieces(screen, board):#Draw the chess pieces on the board
+def draw_pieces(screen, board):
     for row in range(DIMENSION):
         for col in range(DIMENSION):
             piece = board[row][col]
             if piece != "--":
                 screen.blit(IMAGES[piece], (col*SQUARE_SIZE, row*SQUARE_SIZE))
 
-def draw_menu(screen):#Draw animated main menu with particles and buttons
+def draw_menu(screen):
     screen.fill(MENU_BG)
     
-    # Animated particles
     for _ in range(50):
         x = random.randint(0, BOARD_WIDTH)
         y = random.randint(0, BOARD_HEIGHT)
         p.draw.circle(screen, (100, 100, 100), (x, y), 2)
-    # Title
     title_font = p.font.SysFont('Arial', 72, True)
     title_text = title_font.render('CHESS', True, (231, 111, 81))
     title_rect = title_text.get_rect(center=(BOARD_WIDTH//2, 100))
     screen.blit(title_text, title_rect)
-    # Create buttons
     button_font = p.font.SysFont('Arial', 32, True)
     buttons = [
         Button(BOARD_WIDTH//2-150, 200, 300, 60, "Player vs Player"),
         Button(BOARD_WIDTH//2-150, 280, 300, 60, "Player vs AI")
     ]
 
-    # Draw buttons
     for btn in buttons:
         btn.draw(screen, button_font)
 
     return buttons
 
 
-def animate_move(move, screen, board, clock): # Animate piece movement
+def animate_move(move, screen, board, clock):
     d_row = move.end_row - move.start_row
     d_col = move.end_col - move.start_col
     frames = 10
@@ -118,7 +111,7 @@ def animate_move(move, screen, board, clock): # Animate piece movement
         p.display.flip()
         clock.tick(60)
 
-def draw_move_log(screen, game_state, font): # Draw the move log panel
+def draw_move_log(screen, game_state, font):
     move_log_rect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
     p.draw.rect(screen, p.Color('black'), move_log_rect)
     
@@ -137,7 +130,7 @@ def draw_move_log(screen, game_state, font): # Draw the move log panel
         screen.blit(text_surface, (BOARD_WIDTH + padding, text_y))
         text_y += text_surface.get_height() + 2
 
-def game_loop(screen, clock, mode, player_color=None): # Handles both Player vs Player and Player vs AI modes.
+def game_loop(screen, clock, mode, player_color=None):
     game_state = ChessEngine.GameState()
     valid_moves = game_state.getValidMoves()
     selected_square = ()
@@ -147,7 +140,6 @@ def game_loop(screen, clock, mode, player_color=None): # Handles both Player vs 
     game_over = False
 
     while True:
-        # Determine if its a human's turn
         human_turn = (mode == "pvp") or (
             (game_state.white_to_move and player_color == "white") or
             (not game_state.white_to_move and player_color == "black")
@@ -188,7 +180,6 @@ def game_loop(screen, clock, mode, player_color=None): # Handles both Player vs 
                 if e.key == p.K_r:
                     return "menu"
 
-        # AI Move
         if mode == "pvai" and not human_turn and not game_over:
             if not ai_thinking:
                 ai_thinking = True
@@ -204,7 +195,6 @@ def game_loop(screen, clock, mode, player_color=None): # Handles both Player vs 
                 ai_thinking = False
                 valid_moves = game_state.getValidMoves()
 
-        # Draw board, pieces, and highlights
         draw_board(screen)
         draw_pieces(screen, game_state.board)
         highlight_moves(screen, valid_moves, selected_square)
@@ -223,21 +213,17 @@ def game_loop(screen, clock, mode, player_color=None): # Handles both Player vs 
 
 
 def highlight_moves(screen, valid_moves, selected_square):
-    """
-    Highlights valid moves and selected piece with a strong yellowish color.
-    """
     if selected_square:
         row, col = selected_square
         s = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
-        s.fill((255, 215, 0, 180))  # Gold-like yellow for selected piece
+        s.fill((255, 215, 0, 180))
         screen.blit(s, (col * SQUARE_SIZE, row * SQUARE_SIZE))
 
         for move in valid_moves:
             if move.start_row == row and move.start_col == col:
                 highlight_surf = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
-                highlight_surf.fill((255, 255, 153, 180))  # Soft yellow for available moves
+                highlight_surf.fill((255, 255, 153, 180))
                 screen.blit(highlight_surf, (move.end_col * SQUARE_SIZE, move.end_row * SQUARE_SIZE))
-
 
 
 def main():
@@ -247,7 +233,6 @@ def main():
     clock = p.time.Clock()
     load_images()
 
-    # Choose Game Mode
     current_screen = "mode_selection"
     game_mode = None  
     player_color = None  
@@ -255,21 +240,17 @@ def main():
         Button(BOARD_WIDTH // 2 - 150, 200, 300, 60, "Player vs Player"),
         Button(BOARD_WIDTH // 2 - 150, 280, 300, 60, "Player vs AI")
     ]
-    # Choose Color (if AI mode is chosen)
     color_buttons = [
         Button(BOARD_WIDTH // 2 - 150, 200, 300, 60, "Play as White"),
         Button(BOARD_WIDTH // 2 - 150, 280, 300, 60, "Play as Black")
     ]
-    # mebu animation  for the menu
     stars = [(random.randint(0, BOARD_WIDTH), random.randint(0, BOARD_HEIGHT)) for _ in range(50)]
 
     while True:
         screen.fill(MENU_BG)
-        # Draw moving stars animation
         for i, (x, y) in enumerate(stars):
             p.draw.circle(screen, (100, 100, 100), (x, y), 2)
             stars[i] = (x, (y + 1) % BOARD_HEIGHT)  
-        # Draw game title
         title_font = p.font.SysFont('Arial', 72, True)
         title_text = title_font.render('CHESS', True, (231, 111, 81))
         title_rect = title_text.get_rect(center=(BOARD_WIDTH//2, 100))
@@ -279,7 +260,6 @@ def main():
             if e.type == p.QUIT:
                 p.quit()
                 sys.exit()
-            #Choose Game Mode
             if current_screen == "mode_selection":
                 for btn in mode_buttons:
                     if btn.handle_event(e):
@@ -290,14 +270,12 @@ def main():
                             game_mode = "pvai"
                             current_screen = "color_selection"
 
-            #choose Player Color (for AI mode only)
             elif current_screen == "color_selection":
                 for btn in color_buttons:
                     if btn.handle_event(e):
                         player_color = "white" if btn.text == "Play as White" else "black"
                         current_screen = "game"
 
-        # Draw UI based on current_screen
         if current_screen == "mode_selection":
             for btn in mode_buttons:
                 btn.draw(screen, p.font.SysFont('Arial', 32, True))
@@ -307,7 +285,7 @@ def main():
         elif current_screen == "game":
             current_screen = game_loop(
                 screen, clock, game_mode, 
-                player_color if game_mode == "pvai" else None  # Only pass color for AI games
+                player_color if game_mode == "pvai" else None
             )
         p.display.flip()
         clock.tick(MAX_FPS)
